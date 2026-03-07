@@ -15,10 +15,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, r2_score
-
 import warnings
 warnings.filterwarnings("ignore")
 
