@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1d4A-rQE-9Ht37034T_rdhGABCZgjCy6z
 """
 
-pip install streamlit pandas numpy matplotlib seaborn scikit-learn joblib
-
 # ================================
 # AI DATA ANALYZER WEB APPLICATION
 # ================================
