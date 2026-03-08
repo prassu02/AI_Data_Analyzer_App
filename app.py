@@ -55,6 +55,20 @@ if uploaded_file is not None:
     # ================================
     # DATA PREVIEW
     # ================================
+uploaded_file = st.file_uploader("Upload CSV File")
+
+if uploaded_file is not None:
+
+    df = pd.read_csv(uploaded_file)
+
+    st.write("Dataset Preview")
+    st.dataframe(df.head())
+
+    st.write("Dataset Shape")
+    st.write(df.shape)
+
+else:
+    st.info("Please upload a dataset to start analysis.")
 
 st.subheader("Dataset Preview")
 st.dataframe(df.head())
