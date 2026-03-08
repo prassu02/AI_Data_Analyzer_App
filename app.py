@@ -54,48 +54,48 @@ df = pd.read_csv(file)
     # ================================
 
 st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+st.dataframe(df.head())
 
-    st.subheader("Dataset Shape")
-    st.write(df.shape)
+st.subheader("Dataset Shape")
+st.write(df.shape)
 
-    st.subheader("Missing Values")
-    st.write(df.isnull().sum())
+st.subheader("Missing Values")
+st.write(df.isnull().sum())
 
     # ================================
     # DATA CLEANING
     # ================================
 
-    df = df.drop_duplicates()
-    df = df.fillna(method="ffill")
+df = df.drop_duplicates()
+df = df.fillna(method="ffill")
 
     # ================================
     # SUMMARY STATISTICS
     # ================================
 
-    st.subheader("Summary Statistics")
-    st.write(df.describe())
+st.subheader("Summary Statistics")
+st.write(df.describe())
 
     # ================================
     # VISUALIZATION
     # ================================
 
-    st.subheader("Column Visualization")
-    column = st.selectbox("Select Column", df.columns)
-    fig, ax = plt.subplots(figsize=(8,5))
-    df[column].value_counts().plot(kind="bar", ax=ax)
-    st.pyplot(fig)
+st.subheader("Column Visualization")
+column = st.selectbox("Select Column", df.columns)
+fig, ax = plt.subplots(figsize=(8,5))
+df[column].value_counts().plot(kind="bar", ax=ax)
+st.pyplot(fig)
 
     # ================================
     # CORRELATION HEATMAP
     # ================================
 
-    numeric = df.select_dtypes(include=["int64", "float64"])
-    if not numeric.empty:
-        st.subheader("Correlation Heatmap")
-        fig, ax = plt.subplots(figsize=(8,5))
-        sns.heatmap(numeric.corr(), annot=True, cmap="coolwarm", ax=ax)
-        st.pyplot(fig)
+numeric = df.select_dtypes(include=["int64", "float64"])
+if not numeric.empty:
+    st.subheader("Correlation Heatmap")
+    fig, ax = plt.subplots(figsize=(8,5))
+    sns.heatmap(numeric.corr(), annot=True, cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
 
     fig, ax = plt.subplots()
     sns.heatmap(df.corr(), annot=True, cmap="coolwarm", ax=ax)
@@ -105,30 +105,30 @@ st.subheader("Dataset Preview")
     # AUTO INSIGHTS
     # ================================
 
-    st.subheader("Auto Insights")
-    rows, cols = df.shape
-    st.write("Rows:", rows)
-    st.write("Columns:", cols)
-    missing = df.isnull().sum().sum()
-    st.write("Missing Values:", missing)
-    numeric_cols = df.select_dtypes(include="number")
-    if not numeric_cols.empty:
-        highest = numeric_cols.mean().idxmax()
-        st.write("Highest Average Column:", highest)
+st.subheader("Auto Insights")
+rows, cols = df.shape
+st.write("Rows:", rows)
+st.write("Columns:", cols)
+missing = df.isnull().sum().sum()
+st.write("Missing Values:", missing)
+numeric_cols = df.select_dtypes(include="number")
+if not numeric_cols.empty:
+    highest = numeric_cols.mean().idxmax()
+    st.write("Highest Average Column:", highest)
 
     # ================================
     # TARGET SELECTION
     # ================================
 
-    st.subheader("Machine Learning Prediction")
-    target = st.selectbox("Select Target Column", df.columns)
-    if st.button("Run AutoML"):
-    X = df.drop(columns=[target])
-        y = df[target]
-        X = pd.get_dummies(X)
-        if y.dtype == "object":
-            le = LabelEncoder()
-            y = le.fit_transform(y)
+st.subheader("Machine Learning Prediction")
+target = st.selectbox("Select Target Column", df.columns)
+if st.button("Run AutoML"):
+X = df.drop(columns=[target])
+    y = df[target]
+    X = pd.get_dummies(X)
+    if y.dtype == "object":
+        le = LabelEncoder()
+        y = le.fit_transform(y)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
         )
@@ -137,35 +137,35 @@ st.subheader("Dataset Preview")
         # AUTO MODEL SELECTION
         # ================================
 
-        if len(np.unique(y)) <= 20:
-            st.write("Problem Type: Classification")
-            model = RandomForestClassifier()
-            model.fit(X_train, y_train)
-            pred = model.predict(X_test)
-            score = accuracy_score(y_test, pred)
-            st.success(f"Accuracy: {score}")
+if len(np.unique(y)) <= 20:
+        st.write("Problem Type: Classification")
+        model = RandomForestClassifier()
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)
+        score = accuracy_score(y_test, pred)
+        st.success(f"Accuracy: {score}")
 
-        else:
+    else:
 
-            st.write("Problem Type: Regression")
-            model = RandomForestRegressor()
-            model.fit(X_train, y_train)
-            pred = model.predict(X_test)
-            score = r2_score(y_test, pred)
-            st.success(f"R2 Score: {score}")
+        st.write("Problem Type: Regression")
+        model = RandomForestRegressor()
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)
+        score = r2_score(y_test, pred)
+        st.success(f"R2 Score: {score}")
             
-            from sklearn.metrics import r2_score
-            pred = model.predict(X_test)
-            score = r2_score(y_test, pred)
-            st.write("Model Accuracy (R² Score):", score)
+        from sklearn.metrics import r2_score
+        pred = model.predict(X_test)
+        score = r2_score(y_test, pred)
+        st.write("Model Accuracy (R² Score):", score)
 
         # ================================
         # SAMPLE PREDICTION
         # ================================
 
-        sample = X_test.iloc[0:1]
-        prediction = model.predict(sample)
-        st.write("Sample Prediction:", prediction)
+    sample = X_test.iloc[0:1]
+    prediction = model.predict(sample)
+    st.write("Sample Prediction:", prediction)
 st.write("---")
 st.write("AI Data Analyzer | Built with Streamlit")
 
