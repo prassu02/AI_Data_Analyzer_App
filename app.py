@@ -197,27 +197,29 @@ if file:
 
     st.subheader("💬 GPT Data Analyst")
 
-    api_key = st.text_input("OpenAI API Key", type="password")
+api_key = st.text_input("OpenAI API Key", type="password")
+question = st.text_input("Ask a question about your dataset")
 
-    question = st.text_input("Ask a question about your dataset")
+if api_key and question:
 
-    if api_key and question:
+    client = OpenAI(api_key=api_key)
 
-        openai.api_key = api_key
+    prompt = f"""
+    Dataset columns: {df.columns}
 
-        prompt = f"""
-        Dataset columns: {df.columns}
+    User question:
+    {question}
+    """
 
-        User question:
-        {question}
-        """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
+    st.write(response.choices[0].message.content)
 
-        st.write(response.choices[0].message.content)
 
     # ==============================
     # AI REPORT GENERATION
