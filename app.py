@@ -145,7 +145,7 @@ if len(np.unique(y)) <= 20:
         score = accuracy_score(y_test, pred)
         st.success(f"Accuracy: {score}")
 
-    else:
+else:
 
         st.write("Problem Type: Regression")
         model = RandomForestRegressor()
