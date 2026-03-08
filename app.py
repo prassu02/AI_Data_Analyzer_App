@@ -53,7 +53,7 @@ df = pd.read_csv(file)
     # DATA PREVIEW
     # ================================
 
-    st.subheader("Dataset Preview")
+st.subheader("Dataset Preview")
     st.dataframe(df.head())
 
     st.subheader("Dataset Shape")
