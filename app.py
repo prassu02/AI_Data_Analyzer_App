@@ -163,9 +163,9 @@ else:
         # SAMPLE PREDICTION
         # ================================
 
-    sample = X_test.iloc[0:1]
-    prediction = model.predict(sample)
-    st.write("Sample Prediction:", prediction)
+sample = X_test.iloc[0:1]
+prediction = model.predict(sample)
+st.write("Sample Prediction:", prediction)
 st.write("---")
 st.write("AI Data Analyzer | Built with Streamlit")
 
