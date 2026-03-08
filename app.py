@@ -1,192 +1,244 @@
 
-# ================================
-# AI DATA ANALYZER WEB APPLICATION
-# ================================
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, r2_score
+from sklearn.metrics import r2_score, accuracy_score
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
 
-import warnings
-warnings.filterwarnings("ignore")
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
-# ================================
-# PAGE SETTINGS
-# ================================
+import openai
 
-st.set_page_config(page_title="AI Data Analyzer", layout="wide")
+st.set_page_config(layout="wide")
+st.title("🚀 AI Data Analytics Platform")
 
-st.title("AI Data Analysis Tool")
-st.write("Upload CSV → Get Charts → Insights → Predictions automatically")
+# ==============================
+# DATA UPLOAD
+# ==============================
 
-# ================================
-# FILE UPLOAD
-# ================================
+file = st.file_uploader("Upload CSV", type=["csv"])
 
-uploaded_file = st.file_uploader("Upload CSV File")
+if file:
 
-if uploaded_file is not None:
-
-    df = pd.read_csv(uploaded_file)
-
-    # ================================
-    # DATA PREVIEW
-    # ================================
+    df = pd.read_csv(file)
 
     st.subheader("Dataset Preview")
     st.dataframe(df.head())
 
-    st.subheader("Dataset Shape")
-    st.write(df.shape)
-
-    st.subheader("Missing Values")
-    st.write(df.isnull().sum())
-
-    st.download_button(
-        label="Download Processed Data",
-        data=df.to_csv(index=False),
-        file_name="analysis.csv",
-        mime="text/csv"
-    )
-
-    # ================================
-    # DATA CLEANING
-    # ================================
+    # ==============================
+    # AUTO DATA CLEANING
+    # ==============================
 
     df = df.drop_duplicates()
-    df = df.fillna(method="ffill")
 
-    # ================================
-    # SUMMARY STATISTICS
-    # ================================
+    for col in df.columns:
 
-    st.subheader("Summary Statistics")
-    st.write(df.describe())
+        if df[col].dtype == "object":
+            df[col] = df[col].fillna(df[col].mode()[0])
 
-    # ================================
-    # VISUALIZATION
-    # ================================
+        else:
+            df[col] = df[col].fillna(df[col].mean())
 
-    st.subheader("Column Visualization")
+    st.success("Dataset cleaned")
+
+    # ==============================
+    # EXECUTIVE DASHBOARD
+    # ==============================
+
+    st.subheader("📊 Executive Dashboard")
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Rows", df.shape[0])
+    col2.metric("Columns", df.shape[1])
+    col3.metric("Numeric Features", len(numeric_cols))
+
+    if len(numeric_cols) > 0:
+
+        fig = px.histogram(df, x=numeric_cols[0])
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ==============================
+    # DRAG STYLE DASHBOARD
+    # ==============================
+
+    st.subheader("🧩 Build Custom Dashboard")
+
+    chart_type = st.selectbox(
+        "Select Chart",
+        ["Histogram", "Scatter", "Line", "Box"]
+    )
 
     column = st.selectbox("Select Column", df.columns)
 
-    fig, ax = plt.subplots(figsize=(8,5))
-    df[column].value_counts().plot(kind="bar", ax=ax)
-    st.pyplot(fig)
+    if chart_type == "Histogram":
 
-    # ================================
-    # CORRELATION HEATMAP
-    # ================================
+        fig = px.histogram(df, x=column)
 
-    numeric = df.select_dtypes(include=["int64","float64"])
+    elif chart_type == "Scatter":
 
-    if not numeric.empty:
+        col2 = st.selectbox("Y Column", df.columns)
+        fig = px.scatter(df, x=column, y=col2)
 
-        st.subheader("Correlation Heatmap")
+    elif chart_type == "Line":
 
-        fig, ax = plt.subplots(figsize=(8,5))
-        sns.heatmap(numeric.corr(), annot=True, cmap="coolwarm", ax=ax)
-        st.pyplot(fig)
+        fig = px.line(df, y=column)
 
-    # ================================
-    # AUTO INSIGHTS
-    # ================================
+    else:
 
-    st.subheader("Auto Insights")
+        fig = px.box(df, y=column)
 
-    rows, cols = df.shape
-    st.write("Rows:", rows)
-    st.write("Columns:", cols)
+    st.plotly_chart(fig, use_container_width=True)
 
-    missing = df.isnull().sum().sum()
-    st.write("Missing Values:", missing)
+    # ==============================
+    # AUTOMATIC ML MODEL SELECTION
+    # ==============================
 
-    numeric_cols = df.select_dtypes(include="number")
+    st.subheader("🤖 AutoML Prediction")
 
-    if not numeric_cols.empty:
-        highest = numeric_cols.mean().idxmax()
-        st.write("Highest Average Column:", highest)
+    target = st.selectbox("Target Column", df.columns)
 
-    # ================================
-    # MACHINE LEARNING
-    # ================================
+    X = df.drop(columns=[target])
+    y = df[target]
 
-    st.subheader("Machine Learning Prediction")
+    X = pd.get_dummies(X)
 
-    target = st.selectbox("Select Target Column", df.columns)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-    if st.button("Run AutoML"):
+    models = {}
 
-        X = df.drop(columns=[target])
-        y = df[target]
+    if y.dtype == "object":
 
-        # convert categorical features
-        X = pd.get_dummies(X)
+        le = LabelEncoder()
 
-        # classification or regression
+        y_train = le.fit_transform(y_train)
+        y_test = le.transform(y_test)
+
+        models["RandomForest"] = RandomForestClassifier()
+
+    else:
+
+        models["RandomForest"] = RandomForestRegressor()
+        models["LinearRegression"] = LinearRegression()
+        models["DecisionTree"] = DecisionTreeRegressor()
+
+    best_model = None
+    best_score = -999
+
+    for name, model in models.items():
+
+        model.fit(X_train, y_train)
+        preds = model.predict(X_test)
+
         if y.dtype == "object":
-
-            le = LabelEncoder()
-            y = le.fit_transform(y)
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-
-        # ================================
-        # MODEL SELECTION
-        # ================================
-
-        if len(np.unique(y)) <= 20:
-
-            st.write("Problem Type: Classification")
-
-            model = RandomForestClassifier()
-
-            model.fit(X_train, y_train)
-
-            pred = model.predict(X_test)
-
-            score = accuracy_score(y_test, pred)
-
-            st.success(f"Accuracy: {score}")
+            score = accuracy_score(y_test, preds)
 
         else:
+            score = r2_score(y_test, preds)
 
-            st.write("Problem Type: Regression")
+        if score > best_score:
+            best_score = score
+            best_model = model
+            best_name = name
 
-            model = RandomForestRegressor()
+    st.success(f"Best Model: {best_name}")
+    st.write("Score:", best_score)
 
-            model.fit(X_train, y_train)
+    # ==============================
+    # FEATURE IMPORTANCE
+    # ==============================
 
-            pred = model.predict(X_test)
+    st.subheader("📌 Feature Importance")
 
-            score = r2_score(y_test, pred)
+    if hasattr(best_model, "feature_importances_"):
 
-            st.success(f"R² Score: {score}")
+        imp = best_model.feature_importances_
 
-        # ================================
-        # SAMPLE PREDICTION
-        # ================================
+        feat_df = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": imp
+        }).sort_values("Importance", ascending=False)
 
-        sample = X_test.iloc[0:1]
+        fig = px.bar(feat_df.head(10),
+                     x="Importance",
+                     y="Feature",
+                     orientation="h")
 
-        prediction = model.predict(sample)
+        st.plotly_chart(fig, use_container_width=True)
 
-        st.write("Sample Prediction:", prediction)
+    # ==============================
+    # FORECASTING
+    # ==============================
 
-else:
+    st.subheader("📈 Forecast Simulation")
 
-    st.info("Please upload a dataset to start analysis.")
+    value_col = st.selectbox("Select Value Column", numeric_cols)
 
-st.write("---")
-st.write("AI Data Analyzer | Built with Streamlit")
+    df["rolling_mean"] = df[value_col].rolling(5).mean()
 
+    fig = px.line(df, y=[value_col, "rolling_mean"])
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ==============================
+    # GPT DATA ANALYSIS
+    # ==============================
+
+    st.subheader("💬 GPT Data Analyst")
+
+    api_key = st.text_input("OpenAI API Key", type="password")
+
+    question = st.text_input("Ask a question about your dataset")
+
+    if api_key and question:
+
+        openai.api_key = api_key
+
+        prompt = f"""
+        Dataset columns: {df.columns}
+
+        User question:
+        {question}
+        """
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        st.write(response.choices[0].message.content)
+
+    # ==============================
+    # AI REPORT GENERATION
+    # ==============================
+
+    st.subheader("📄 Generate Business Report")
+
+    if st.button("Create Report"):
+
+        report = "AI_Report.pdf"
+
+        c = canvas.Canvas(report, pagesize=letter)
+
+        c.drawString(100, 750, "AI Data Analysis Report")
+
+        c.drawString(100, 720, f"Rows: {df.shape[0]}")
+        c.drawString(100, 700, f"Columns: {df.shape[1]}")
+        c.drawString(100, 680, f"Best Model: {best_name}")
+        c.drawString(100, 660, f"Score: {best_score}")
+
+        c.save()
+
+        with open(report, "rb") as f:
+            st.download_button("Download PDF", f, "AI_Report.pdf")
