@@ -195,31 +195,34 @@ if file:
     # GPT DATA ANALYSIS
     # ==============================
 
-    st.subheader("💬 GPT Data Analyst")
+st.subheader("💬 GPT Data Analyst")
 
 api_key = st.text_input("OpenAI API Key", type="password")
 question = st.text_input("Ask a question about your dataset")
 
 if api_key and question:
 
-    client = OpenAI(api_key=api_key)
+    try:
+        client = OpenAI(api_key=api_key)
 
-    prompt = f"""
-    Dataset columns: {df.columns}
+        prompt = f"""
+        Dataset columns: {list(df.columns)}
 
-    User question:
-    {question}
-    """
+        User question:
+        {question}
+        """
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-    st.write(response.choices[0].message.content)
+        st.write(response.choices[0].message.content)
 
+    except Exception as e:
+        st.error("API Key invalid or connection failed.")
 
     # ==============================
     # AI REPORT GENERATION
