@@ -123,7 +123,7 @@ if not numeric_cols.empty:
 st.subheader("Machine Learning Prediction")
 target = st.selectbox("Select Target Column", df.columns)
 if st.button("Run AutoML"):
-X = df.drop(columns=[target])
+    X = df.drop(columns=[target])
     y = df[target]
     X = pd.get_dummies(X)
     if y.dtype == "object":
