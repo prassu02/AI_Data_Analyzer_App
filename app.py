@@ -76,7 +76,7 @@ if file:
 
     column = st.selectbox("Select Column", df.columns)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,5))
 
     df[column].value_counts().plot(kind="bar", ax=ax)
 
