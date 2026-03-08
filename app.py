@@ -37,17 +37,20 @@ st.write("Upload CSV → Get Charts → Insights → Predictions automatically")
 # ================================
 # FILE UPLOAD
 # ================================
+uploaded_file = st.file_uploader("Upload CSV File")
 
-file = st.file_uploader("Upload CSV File", type=["csv"])
+if uploaded_file is not None:
 
-if file:
- st.download_button(
-    label="Download Processed Data",
-    data=df.to_csv(index=False),
-    file_name="analysis.csv",
-    mime="text/csv"
-)
-df = pd.read_csv(file)
+    df = pd.read_csv(uploaded_file)
+
+    st.write(df.head())
+
+    st.download_button(
+        label="Download Processed Data",
+        data=df.to_csv(index=False),
+        file_name="analysis.csv",
+        mime="text/csv"
+    )
 
     # ================================
     # DATA PREVIEW
