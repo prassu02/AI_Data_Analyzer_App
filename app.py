@@ -41,7 +41,7 @@ st.write("Upload CSV → Get Charts → Insights → Predictions automatically")
 file = st.file_uploader("Upload CSV File", type=["csv"])
 
 if file:
-st.download_button(
+ st.download_button(
     label="Download Processed Data",
     data=df.to_csv(index=False),
     file_name="analysis.csv",
