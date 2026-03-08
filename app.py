@@ -31,7 +31,7 @@ st.write("Upload CSV → Get Charts → Insights → Predictions automatically")
 # FILE UPLOAD
 # ================================
 
-file = st.file_uploader("Cars", type=["csv"])
+file = st.file_uploader("Upload CSV File", type=["csv"])
 
 if file:
 
