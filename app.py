@@ -14,7 +14,7 @@ from sklearn.tree import DecisionTreeRegressor
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-import openai
+from openai import OpenAI
 
 st.set_page_config(layout="wide")
 st.title("🚀 AI Data Analytics Platform")
