@@ -47,7 +47,7 @@ if file:
     file_name="analysis.csv",
     mime="text/csv"
 )
-    df = pd.read_csv(file)
+df = pd.read_csv(file)
 
     # ================================
     # DATA PREVIEW
