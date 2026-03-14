@@ -22,19 +22,28 @@ st.title("🚀 AI Data Analytics Platform")
 # ==============================
 # DATA UPLOAD
 # ==============================
+st.markdown("### Upload CSV or Excel file")
 
-file = st.file_uploader("Upload CSV or Excel file", type=["csv","xlsx"])
+uploaded_file = st.file_uploader(
+    "Drag and drop file here",
+    type=["csv","xlsx"],
+    help="Supported formats: CSV, XLSX | Large datasets supported"
+)
 
-if file is not None:
+if uploaded_file:
 
-    if file.name.endswith(".csv"):
-        df = pd.read_csv(file)
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
 
     else:
-        df = pd.read_excel(file)
+        df = pd.read_excel(uploaded_file)
+
+    st.success("File uploaded successfully")
 
     st.subheader("Dataset Preview")
     st.dataframe(df.head())
+
+    st.write("Shape:", df.shape)
 
     # ==============================
     # AUTO DATA CLEANING
