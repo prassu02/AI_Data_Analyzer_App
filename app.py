@@ -29,9 +29,7 @@ if file:
 
     df = pd.read_csv(file)
     
- else: 
-    
-file = st.file_uploader("Upload XLSX", type=["xlsx"])
+ else:
 
 if file:
 
