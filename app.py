@@ -23,7 +23,7 @@ st.title("🚀 AI Data Analytics Platform")
 # DATA UPLOAD
 # ==============================
 
-file = st.file_uploader("Upload CSV", type=["csv"]) or ("Upload XLSX" type=["xlsx"])
+file = st.file_uploader("Upload CSV", type=["csv"]) or ("Upload XLSX", type=["xlsx"])
 
 if file:
 
