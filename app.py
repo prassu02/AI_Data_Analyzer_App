@@ -45,6 +45,10 @@ if uploaded_file:
 
     st.write("Shape:", df.shape)
 
+    file_size = uploaded_file.size / (1024*1024)
+
+st.info(f"File Size: {file_size:.2f} MB")
+
     # ==============================
     # AUTO DATA CLEANING
     # ==============================
