@@ -14,44 +14,33 @@ from sklearn.tree import DecisionTreeRegressor
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-from openai import OpenAI
-
 st.set_page_config(layout="wide")
 st.title("🚀 AI Data Analytics Platform")
 
-# ==============================
-# DATA UPLOAD
-# ==============================
-st.markdown("### Upload CSV or Excel file")
+# =============================
+# FILE UPLOAD
+# =============================
 
 uploaded_file = st.file_uploader(
-    "Drag and drop file here",
-    type=["csv","xlsx"],
-    help="Supported formats: CSV, XLSX | Large datasets supported"
+    "Upload CSV or Excel Dataset",
+    type=["csv","xlsx"]
 )
 
 if uploaded_file:
 
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
-
     else:
         df = pd.read_excel(uploaded_file)
 
-    st.success("File uploaded successfully")
+    st.success("Dataset loaded")
 
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+    file_size = uploaded_file.size/(1024*1024)
+    st.info(f"File Size: {file_size:.2f} MB")
 
-    st.write("Shape:", df.shape)
-
-    file_size = uploaded_file.size / (1024*1024)
-
-st.info(f"File Size: {file_size:.2f} MB")
-
-    # ==============================
+    # =============================
     # AUTO DATA CLEANING
-    # ==============================
+    # =============================
 
     df = df.drop_duplicates()
 
@@ -63,204 +52,219 @@ st.info(f"File Size: {file_size:.2f} MB")
         else:
             df[col] = df[col].fillna(df[col].mean())
 
-    st.success("Dataset cleaned")
+    # =============================
+    # DATA PREVIEW
+    # =============================
 
-    # ==============================
-    # EXECUTIVE DASHBOARD
-    # ==============================
+    st.subheader("Dataset Preview")
+    st.dataframe(df.head())
 
-    st.subheader("📊 Executive Dashboard")
+    # =============================
+    # AUTO DATA INSIGHTS
+    # =============================
+
+    st.subheader("Automatic Insights")
+
+    col1,col2,col3 = st.columns(3)
+
+    col1.metric("Rows",df.shape[0])
+    col2.metric("Columns",df.shape[1])
+    col3.metric("Missing Values",df.isnull().sum().sum())
 
     numeric_cols = df.select_dtypes(include=np.number).columns
 
-    col1, col2, col3 = st.columns(3)
+    if len(numeric_cols)>0:
 
-    col1.metric("Rows", df.shape[0])
-    col2.metric("Columns", df.shape[1])
-    col3.metric("Numeric Features", len(numeric_cols))
+        fig = px.histogram(df,x=numeric_cols[0])
+        st.plotly_chart(fig,use_container_width=True)
 
-    if len(numeric_cols) > 0:
-
-        fig = px.histogram(df, x=numeric_cols[0])
-        st.plotly_chart(fig, use_container_width=True)
-
-    # ==============================
+    # =============================
     # DRAG STYLE DASHBOARD
-    # ==============================
+    # =============================
 
-    st.subheader("🧩 Build Custom Dashboard")
+    st.subheader("Build Dashboard")
 
-    chart_type = st.selectbox(
-        "Select Chart",
-        ["Histogram", "Scatter", "Line", "Box"]
+    chart = st.selectbox(
+        "Chart Type",
+        ["Histogram","Scatter","Line","Box"]
     )
 
-    column = st.selectbox("Select Column", df.columns)
+    x = st.selectbox("X Column",df.columns)
 
-    if chart_type == "Histogram":
+    if chart=="Histogram":
 
-        fig = px.histogram(df, x=column)
+        fig = px.histogram(df,x=x)
 
-    elif chart_type == "Scatter":
+    elif chart=="Scatter":
 
-        col2 = st.selectbox("Y Column", df.columns)
-        fig = px.scatter(df, x=column, y=col2)
+        y = st.selectbox("Y Column",df.columns)
+        fig = px.scatter(df,x=x,y=y)
 
-    elif chart_type == "Line":
+    elif chart=="Line":
 
-        fig = px.line(df, y=column)
+        fig = px.line(df,y=x)
 
     else:
 
-        fig = px.box(df, y=column)
+        fig = px.box(df,y=x)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig,use_container_width=True)
 
-    # ==============================
-    # AUTOMATIC ML MODEL SELECTION
-    # ==============================
+    # =============================
+    # AUTOML MODEL TRAINING
+    # =============================
 
-    st.subheader("🤖 AutoML Prediction")
+    st.subheader("AutoML Prediction")
 
-    target = st.selectbox("Target Column", df.columns)
+    target = st.selectbox("Target Column",df.columns)
 
     X = df.drop(columns=[target])
     y = df[target]
 
     X = pd.get_dummies(X)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    models = {}
-
-    if y.dtype == "object":
+    if y.dtype=="object":
 
         le = LabelEncoder()
+        y = le.fit_transform(y)
 
-        y_train = le.fit_transform(y_train)
-        y_test = le.transform(y_test)
+        model = RandomForestClassifier()
 
-        models["RandomForest"] = RandomForestClassifier()
+        param = {
+            "n_estimators":[50,100],
+            "max_depth":[3,5,10]
+        }
+
+        metric = accuracy_score
 
     else:
 
-        models["RandomForest"] = RandomForestRegressor()
-        models["LinearRegression"] = LinearRegression()
-        models["DecisionTree"] = DecisionTreeRegressor()
+        model = RandomForestRegressor()
 
-    best_model = None
-    best_score = -999
+        param = {
+            "n_estimators":[50,100],
+            "max_depth":[3,5,10]
+        }
 
-    for name, model in models.items():
+        metric = r2_score
 
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
+    X_train,X_test,y_train,y_test = train_test_split(
+        X,y,test_size=0.2,random_state=42
+    )
 
-        if y.dtype == "object":
-            score = accuracy_score(y_test, preds)
+    grid = GridSearchCV(model,param,cv=3)
 
-        else:
-            score = r2_score(y_test, preds)
+    grid.fit(X_train,y_train)
 
-        if score > best_score:
-            best_score = score
-            best_model = model
-            best_name = name
+    best_model = grid.best_estimator_
 
-    st.success(f"Best Model: {best_name}")
-    st.write("Score:", best_score)
+    pred = best_model.predict(X_test)
 
-    # ==============================
+    score = metric(y_test,pred)
+
+    st.success(f"Best Model Score: {score}")
+
+    # =============================
     # FEATURE IMPORTANCE
-    # ==============================
+    # =============================
 
-    st.subheader("📌 Feature Importance")
+    if hasattr(best_model,"feature_importances_"):
 
-    if hasattr(best_model, "feature_importances_"):
+        st.subheader("Feature Importance")
 
         imp = best_model.feature_importances_
 
-        feat_df = pd.DataFrame({
-            "Feature": X.columns,
-            "Importance": imp
-        }).sort_values("Importance", ascending=False)
+        feat = pd.DataFrame({
+            "Feature":X.columns,
+            "Importance":imp
+        }).sort_values("Importance",ascending=False)
 
-        fig = px.bar(feat_df.head(10),
+        fig = px.bar(feat.head(10),
                      x="Importance",
                      y="Feature",
                      orientation="h")
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig,use_container_width=True)
 
-    # ==============================
-    # FORECASTING
-    # ==============================
+    # =============================
+    # FORECAST SIMULATION
+    # =============================
 
-    st.subheader("📈 Forecast Simulation")
+    st.subheader("Forecast Simulation")
 
-    value_col = st.selectbox("Select Value Column", numeric_cols)
+    if len(numeric_cols)>0:
 
-    df["rolling_mean"] = df[value_col].rolling(5).mean()
-
-    fig = px.line(df, y=[value_col, "rolling_mean"])
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # ==============================
-    # GPT DATA ANALYSIS
-    # ==============================
-
-st.subheader("💬 GPT Data Analyst")
-
-api_key = st.text_input("OpenAI API Key", type="password")
-question = st.text_input("Ask a question about your dataset")
-
-if api_key and question:
-
-    try:
-        client = OpenAI(api_key=api_key)
-
-        prompt = f"""
-        Dataset columns: {list(df.columns)}
-
-        User question:
-        {question}
-        """
-
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        value_col = st.selectbox(
+            "Select Value Column",
+            numeric_cols
         )
 
-        st.write(response.choices[0].message.content)
+        df["rolling_mean"] = df[value_col].rolling(5).mean()
 
-    except Exception as e:
-        st.error("API Key invalid or connection failed.")
+        fig = px.line(df,y=[value_col,"rolling_mean"])
 
-    # ==============================
-    # AI REPORT GENERATION
-    # ==============================
+        st.plotly_chart(fig,use_container_width=True)
 
-    st.subheader("📄 Generate Business Report")
+    # =============================
+    # DATASET CHAT (NO API)
+    # =============================
 
-    if st.button("Create Report"):
+    st.subheader("Chat with Dataset")
 
-        report = "AI_Report.pdf"
+    question = st.text_input("Ask a question")
 
-        c = canvas.Canvas(report, pagesize=letter)
+    if question:
 
-        c.drawString(100, 750, "AI Data Analysis Report")
+        q = question.lower()
 
-        c.drawString(100, 720, f"Rows: {df.shape[0]}")
-        c.drawString(100, 700, f"Columns: {df.shape[1]}")
-        c.drawString(100, 680, f"Best Model: {best_name}")
-        c.drawString(100, 660, f"Score: {best_score}")
+        if "average" in q:
+
+            st.write(df.mean(numeric_only=True))
+
+        elif "max" in q:
+
+            st.write(df.max(numeric_only=True))
+
+        elif "min" in q:
+
+            st.write(df.min(numeric_only=True))
+
+        elif "correlation" in q:
+
+            st.write(df.corr(numeric_only=True))
+
+        else:
+
+            st.write("Try asking about average, max, min, correlation.")
+
+    # =============================
+    # BUSINESS REPORT
+    # =============================
+
+    st.subheader("Generate Business Report")
+
+    if st.button("Create PDF Report"):
+
+        report="AI_Report.pdf"
+
+        c = canvas.Canvas(report,pagesize=letter)
+
+        c.drawString(100,750,"AI Data Analysis Report")
+        c.drawString(100,720,f"Rows: {df.shape[0]}")
+        c.drawString(100,700,f"Columns: {df.shape[1]}")
+        c.drawString(100,680,f"Model Score: {score}")
 
         c.save()
 
-        with open(report, "rb") as f:
-            st.download_button("Download PDF", f, "AI_Report.pdf")
+        with open(report,"rb") as f:
+
+            st.download_button(
+                "Download Report",
+                f,
+                file_name="AI_Report.pdf"
+            )
+
+else:
+
+    st.info("Upload a dataset to begin analysis.")
+    
