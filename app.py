@@ -23,11 +23,19 @@ st.title("🚀 AI Data Analytics Platform")
 # DATA UPLOAD
 # ==============================
 
-file = st.file_uploader("Upload CSV", type=["csv"])
+file = st.file_uploader("Upload CSV / XLSX", type=["csv"])
 
 if file:
 
     df = pd.read_csv(file)
+    
+else: 
+    
+file = st.file_uploader("Upload XLSX", type=["xlsx"])
+
+if file:
+
+    df = pd.read_excel(file)
 
     st.subheader("Dataset Preview")
     st.dataframe(df.head())
